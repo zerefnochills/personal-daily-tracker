@@ -45,13 +45,23 @@ into a real Flutter project on your machine:
   status is computed dynamically from the current streak, not stored;
   claiming is a manual action.
 
+## What's in Phase 3 — Fitness + Finance
+- Fitness: add exercises, log sets (sets/reps/weight) per exercise, auto
+  personal-record display (heaviest weight logged), weekly diet planner
+  (Mon–Sun, repeats every week — not tied to specific calendar dates)
+- Finance: set monthly income, log expenses with category + optional
+  description, auto-calculated remaining balance for the current month,
+  category breakdown, swipe-to-delete on expenses
+- Both are self-contained modules — no dependency on Phase 1/2 data
+
 ## Known gaps (intentional, for later phases)
 - Goal↔Task linking (`goalId`/`parentGoalId` columns exist in the schema but
   there's no picker UI yet) — add once the basic loop is in daily use
 - No reminders/notifications yet — small addition
   (flutter_local_notifications) once the CRUD flows feel solid
-- No visible "elapsed time so far" live counter while a session is running —
-  the tile refreshes every 20s as a cosmetic nicety, not a real-time
-  stopwatch. Fine for study/workout sessions; revisit if that bothers you
-  in daily use.
+- No live per-second timer display while a commitment session is running —
+  the tile refreshes every 20s cosmetically; underlying data is always
+  correct regardless (timestamp-based)
+- Finance is calendar-month only for now — no custom date range reporting
+- Diet plan has no auto-reminder ("what to eat today") on the dashboard yet
 - Plain Material theme — the Notion + creamish/wine restyle is a separate pass
