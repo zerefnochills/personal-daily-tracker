@@ -62,15 +62,33 @@ into a real Flutter project on your machine:
   SQLite FTS5, kept simple since this is a personal, low-volume dataset;
   revisit only if entry count grows large enough to feel slow
 
-## Known gaps (intentional, for later phases)
+## What's in the UI overhaul
+- New palette: creamish background, wine primary, muted-gold accent (see
+  `lib/theme/app_theme.dart` for exact hex values)
+- New typography: Lora (headings) + Inter (body) via `google_fonts`. These
+  are fetched from Google's CDN on first run — needs internet the very
+  first time the app launches to look right; falls back to the system font
+  gracefully if offline, so nothing breaks either way
+- Real navigation: a shared `AppDrawer` (side nav) is now on every screen,
+  with a profile header (avatar + nickname, tap to edit) at the top and
+  links to every section
+- Dashboard: time-of-day greeting ("Good morning/afternoon/evening/night" +
+  your nickname if set), today's tasks in a card, and a 2-column quick
+  access grid to every module (replacing the old plain button rows)
+- Profile screen: tap the avatar to pick a photo from your gallery (saved
+  locally into app storage so it survives cache clears), set a nickname
+  used in the greeting
+
+## Known gaps (intentional, for later)
 - Goal↔Task linking (`goalId`/`parentGoalId` columns exist in the schema but
-  there's no picker UI yet) — add once the basic loop is in daily use
+  there's no picker UI yet)
 - No reminders/notifications yet
-- No live per-second timer display while a commitment session is running —
-  the tile refreshes every 20s cosmetically; underlying data is always
-  correct regardless (timestamp-based)
-- Finance is calendar-month only for now — no custom date range reporting
-- Diet plan has no auto-reminder ("what to eat today") on the dashboard yet
-- Vault search is plain LIKE matching, not fuzzy/semantic — Phase 5's RAG
-  layer is what eventually makes this "smart"
-- Plain Material theme — the Notion + creamish/wine restyle is a separate pass
+- No live per-second timer display while a commitment session is running
+- Finance is calendar-month only — no custom date range reporting
+- Diet plan has no dashboard "what to eat today" surfacing yet
+- Vault search is plain LIKE, not fuzzy/semantic (Phase 5 territory)
+- Drawer navigation pushes a new screen instance each time rather than
+  popping back to an existing one — fine for normal use, but bouncing
+  between drawer items a lot will grow the back stack. Revisit with
+  `Navigator.pushAndRemoveUntil` later if that becomes annoying in practice
+- AI layer not started (Phase 5, blocked on LLM API budget)
