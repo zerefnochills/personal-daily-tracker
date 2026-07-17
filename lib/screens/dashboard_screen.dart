@@ -5,6 +5,8 @@ import 'tasks_screen.dart';
 import 'goals_screen.dart';
 import 'commitments_screen.dart';
 import 'rewards_screen.dart';
+import 'fitness_screen.dart';
+import 'finance_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -84,6 +86,28 @@ class DashboardScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(builder: (_) => const RewardsScreen())),
                   child: const Text('Rewards'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const FitnessScreen())),
+                  child: const Text('Fitness'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const FinanceScreen())),
+                  child: const Text('Finance'),
                 ),
               ),
             ],
