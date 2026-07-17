@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show Value;
 import '../main.dart';
 import '../data/database.dart';
 import '../logic/streak_service.dart';
+import '../widgets/app_drawer.dart';
 
 class CommitmentsScreen extends StatelessWidget {
   const CommitmentsScreen({super.key});
@@ -73,6 +74,7 @@ class CommitmentsScreen extends StatelessWidget {
     final streakService = StreakService(db);
     return Scaffold(
       appBar: AppBar(title: const Text('Commitments')),
+      drawer: const AppDrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addCommitmentDialog(context),
         child: const Icon(Icons.add),
