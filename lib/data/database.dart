@@ -83,13 +83,73 @@ class Rewards extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DriftDatabase(
-    tables: [Goals, Tasks, Commitments, CommitmentSessions, LifePassUsage, Rewards])
+// ---- Phase 3: Fitness + Finance ----
+
+class Exercises extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get muscleGroup => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+class WorkoutEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get exerciseId => integer().references(Exercises, #id)();
+  DateTimeColumn get date => dateTime()();
+  IntColumn get sets => integer()();
+  IntColumn get reps => integer()();
+  RealColumn get weightKg => real()();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+// Static weekly plan, not tied to a specific calendar date — it repeats
+// every week. dayOfWeek: 0=Monday .. 6=Sunday.
+class DietPlanEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get dayOfWeek => integer()();
+  TextColumn get mealType => text()(); // breakfast | lunch | dinner | snack
+  TextColumn get description => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+// One row per (year, month) — enforced in the DAO via upsert logic rather
+// than a DB-level unique constraint, to keep the schema simple.
+class MonthlyIncome extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get year => integer()();
+  IntColumn get month => integer()();
+  RealColumn get amount => real()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+class Expenses extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  RealColumn get amount => real()();
+  TextColumn get category => text()();
+  TextColumn get description => text().nullable()();
+  DateTimeColumn get date => dateTime()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(tables: [
+  Goals,
+  Tasks,
+  Commitments,
+  CommitmentSessions,
+  LifePassUsage,
+  Rewards,
+  Exercises,
+  WorkoutEntries,
+  DietPlanEntries,
+  MonthlyIncome,
+  Expenses,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -102,6 +162,13 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(commitmentSessions);
             await m.createTable(lifePassUsage);
             await m.createTable(rewards);
+          }
+          if (from < 3) {
+            await m.createTable(exercises);
+            await m.createTable(workoutEntries);
+            await m.createTable(dietPlanEntries);
+            await m.createTable(monthlyIncome);
+            await m.createTable(expenses);
           }
         },
       );
@@ -216,6 +283,83 @@ class AppDatabase extends _$AppDatabase {
     isClaimed: const Value(true),
     claimedAt: Value(DateTime.now()),
   ));
+
+  // ---- Fitness: Exercises ----
+  Future<int> addExercise(ExercisesCompanion e) => into(exercises).insert(e);
+  Stream<List<Exercise>> watchAllExercises() => select(exercises).watch();
+  Future<int> deleteExercise(int id) =>
+      (delete(exercises)..where((e) => e.id.equals(id))).go();
+
+  // ---- Fitness: Workout Entries ----
+  Future<int> addWorkoutEntry(WorkoutEntriesCompanion e) =>
+      into(workoutEntries).insert(e);
+  Stream<List<WorkoutEntry>> watchEntriesForExercise(int exerciseId) =>
+      (select(workoutEntries)
+            ..where((w) => w.exerciseId.equals(exerciseId))
+            ..orderBy([(w) => OrderingTerm.desc(w.date)]))
+          .watch();
+  Future<int> deleteWorkoutEntry(int id) =>
+      (delete(workoutEntries)..where((w) => w.id.equals(id))).go();
+
+  /// Personal record (heaviest weight logged) for an exercise, or null if
+  /// no entries yet.
+  Future<double?> personalRecord(int exerciseId) async {
+    final rows = await (select(workoutEntries)
+          ..where((w) => w.exerciseId.equals(exerciseId)))
+        .get();
+    if (rows.isEmpty) return null;
+    return rows.map((r) => r.weightKg).reduce((a, b) => a > b ? a : b);
+  }
+
+  // ---- Fitness: Diet Plan ----
+  Future<int> addDietEntry(DietPlanEntriesCompanion e) =>
+      into(dietPlanEntries).insert(e);
+  Stream<List<DietPlanEntry>> watchDietForDay(int dayOfWeek) =>
+      (select(dietPlanEntries)..where((d) => d.dayOfWeek.equals(dayOfWeek)))
+          .watch();
+  Future<int> deleteDietEntry(int id) =>
+      (delete(dietPlanEntries)..where((d) => d.id.equals(id))).go();
+
+  // ---- Finance: Monthly Income ----
+  // Upsert by (year, month) since there's no DB-level unique constraint.
+  Future<void> setMonthlyIncome(int year, int month, double amount) async {
+    final existing = await (select(monthlyIncome)
+          ..where((m) => m.year.equals(year) & m.month.equals(month)))
+        .getSingleOrNull();
+    if (existing == null) {
+      await into(monthlyIncome).insert(MonthlyIncomeCompanion(
+        year: Value(year),
+        month: Value(month),
+        amount: Value(amount),
+      ));
+    } else {
+      await (update(monthlyIncome)..where((m) => m.id.equals(existing.id)))
+          .write(MonthlyIncomeCompanion(amount: Value(amount)));
+    }
+  }
+
+  Future<double> incomeForMonth(int year, int month) async {
+    final row = await (select(monthlyIncome)
+          ..where((m) => m.year.equals(year) & m.month.equals(month)))
+        .getSingleOrNull();
+    return row?.amount ?? 0;
+  }
+
+  // ---- Finance: Expenses ----
+  Future<int> addExpense(ExpensesCompanion e) => into(expenses).insert(e);
+  Future<int> deleteExpense(int id) =>
+      (delete(expenses)..where((e) => e.id.equals(id))).go();
+
+  Stream<List<Expense>> watchExpensesForMonth(int year, int month) {
+    final start = DateTime(year, month, 1);
+    final end = DateTime(year, month + 1, 1);
+    return (select(expenses)
+          ..where((e) =>
+              e.date.isBiggerOrEqualValue(start) &
+              e.date.isSmallerThanValue(end))
+          ..orderBy([(e) => OrderingTerm.desc(e.date)]))
+        .watch();
+  }
 }
 
 LazyDatabase _openConnection() {
