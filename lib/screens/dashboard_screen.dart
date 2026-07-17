@@ -7,6 +7,7 @@ import 'commitments_screen.dart';
 import 'rewards_screen.dart';
 import 'fitness_screen.dart';
 import 'finance_screen.dart';
+import 'vaults_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -111,6 +112,15 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const VaultsScreen())),
+              child: const Text('Vaults'),
+            ),
           ),
         ],
       ),
