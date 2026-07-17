@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'data/database.dart';
 import 'screens/dashboard_screen.dart';
+import 'theme/app_theme.dart';
 
 // Single shared DB instance for the app. Fine for Phase 1 scope;
 // revisit if we introduce a proper DI setup later.
@@ -19,9 +20,7 @@ class LifeOSApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'LifeOS',
-      // Placeholder theme — swap for the creamish/wine Notion-style theme
-      // once Phase 1 data flows are verified.
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.brown),
+      theme: AppTheme.themeData,
       home: const DashboardScreen(),
     );
   }
