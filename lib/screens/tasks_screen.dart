@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
 import '../main.dart';
 import '../data/database.dart';
+import '../widgets/app_drawer.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -75,6 +76,7 @@ class TasksScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('All Tasks')),
+      drawer: const AppDrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addTaskDialog(context),
         child: const Icon(Icons.add),
