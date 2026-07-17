@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' show Value;
 import '../main.dart';
 import '../data/database.dart';
 import '../logic/streak_service.dart';
+import '../widgets/app_drawer.dart';
 
 class RewardsScreen extends StatelessWidget {
   const RewardsScreen({super.key});
@@ -83,6 +84,7 @@ class RewardsScreen extends StatelessWidget {
     final streakService = StreakService(db);
     return Scaffold(
       appBar: AppBar(title: const Text('Rewards')),
+      drawer: const AppDrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addRewardDialog(context),
         child: const Icon(Icons.add),
