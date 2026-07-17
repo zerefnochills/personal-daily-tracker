@@ -54,14 +54,23 @@ into a real Flutter project on your machine:
   category breakdown, swipe-to-delete on expenses
 - Both are self-contained modules — no dependency on Phase 1/2 data
 
+## What's in Phase 4 — Vaults
+- Founder Vault + Knowledge Vault: same underlying schema (title, content,
+  comma-separated tags), differentiated by `vaultType` — tabs in one screen
+- Add/edit/delete freeform entries, swipe-to-delete
+- Search box filters live via SQL `LIKE` across title/content/tags — not
+  SQLite FTS5, kept simple since this is a personal, low-volume dataset;
+  revisit only if entry count grows large enough to feel slow
+
 ## Known gaps (intentional, for later phases)
 - Goal↔Task linking (`goalId`/`parentGoalId` columns exist in the schema but
   there's no picker UI yet) — add once the basic loop is in daily use
-- No reminders/notifications yet — small addition
-  (flutter_local_notifications) once the CRUD flows feel solid
+- No reminders/notifications yet
 - No live per-second timer display while a commitment session is running —
   the tile refreshes every 20s cosmetically; underlying data is always
   correct regardless (timestamp-based)
 - Finance is calendar-month only for now — no custom date range reporting
 - Diet plan has no auto-reminder ("what to eat today") on the dashboard yet
+- Vault search is plain LIKE matching, not fuzzy/semantic — Phase 5's RAG
+  layer is what eventually makes this "smart"
 - Plain Material theme — the Notion + creamish/wine restyle is a separate pass
