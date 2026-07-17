@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
 import '../main.dart';
 import '../data/database.dart';
+import '../widgets/app_drawer.dart';
 
 class VaultsScreen extends StatefulWidget {
   const VaultsScreen({super.key});
@@ -36,6 +37,7 @@ class _VaultsScreenState extends State<VaultsScreen>
           tabs: const [Tab(text: 'Founder'), Tab(text: 'Knowledge')],
         ),
       ),
+      drawer: const AppDrawer(),
       body: TabBarView(
         controller: _tabController,
         children: const [
