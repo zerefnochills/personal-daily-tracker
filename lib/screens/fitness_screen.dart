@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
 import '../main.dart';
 import '../data/database.dart';
+import '../widgets/app_drawer.dart';
 
 class FitnessScreen extends StatefulWidget {
   const FitnessScreen({super.key});
@@ -36,6 +37,7 @@ class _FitnessScreenState extends State<FitnessScreen>
           tabs: const [Tab(text: 'Workouts'), Tab(text: 'Diet Plan')],
         ),
       ),
+      drawer: const AppDrawer(),
       body: TabBarView(
         controller: _tabController,
         children: const [_WorkoutsTab(), _DietPlanTab()],
