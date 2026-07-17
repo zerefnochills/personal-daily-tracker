@@ -149,6 +149,18 @@ class VaultEntries extends Table {
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+// ---- Profile ----
+// Single-row table (id is always 1) — nickname + local path to a picked
+// profile picture, used for the home-screen greeting and nav drawer header.
+class UserProfile extends Table {
+  IntColumn get id => integer()();
+  TextColumn get nickname => text().withDefault(const Constant(''))();
+  TextColumn get avatarPath => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(tables: [
   Goals,
   Tasks,
@@ -162,12 +174,13 @@ class VaultEntries extends Table {
   MonthlyIncome,
   Expenses,
   VaultEntries,
+  UserProfile,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -190,6 +203,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 4) {
             await m.createTable(vaultEntries);
+          }
+          if (from < 5) {
+            await m.createTable(userProfile);
           }
         },
       );
@@ -411,6 +427,38 @@ class AppDatabase extends _$AppDatabase {
                   v.tags.like(likeQuery)))
           ..orderBy([(v) => OrderingTerm.desc(v.updatedAt)]))
         .watch();
+  }
+
+  // ---- Profile ----
+  // Always id=1. watchProfile emits a sensible default row (empty nickname,
+  // no avatar) if the row hasn't been created yet, so callers never need to
+  // null-check.
+  Stream<UserProfileData> watchProfile() {
+    return (select(userProfile)..where((u) => u.id.equals(1)))
+        .watchSingleOrNull()
+        .map((row) =>
+            row ?? const UserProfileData(id: 1, nickname: '', avatarPath: null));
+  }
+
+  Future<void> setProfile({String? nickname, String? avatarPath}) async {
+    final existing =
+        await (select(userProfile)..where((u) => u.id.equals(1)))
+            .getSingleOrNull();
+    if (existing == null) {
+      await into(userProfile).insert(UserProfileCompanion.insert(
+        id: 1,
+        nickname: Value(nickname ?? ''),
+        avatarPath: Value(avatarPath),
+      ));
+    } else {
+      await (update(userProfile)..where((u) => u.id.equals(1))).write(
+        UserProfileCompanion(
+          nickname: nickname != null ? Value(nickname) : const Value.absent(),
+          avatarPath:
+              avatarPath != null ? Value(avatarPath) : const Value.absent(),
+        ),
+      );
+    }
   }
 }
 
