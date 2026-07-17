@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show Value;
 import '../main.dart';
 import '../data/database.dart';
+import '../widgets/app_drawer.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -68,6 +69,7 @@ class _GoalsScreenState extends State<GoalsScreen>
           tabs: types.map((t) => Tab(text: t)).toList(),
         ),
       ),
+      drawer: const AppDrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addGoalDialog(context, types[_tabController.index]),
         child: const Icon(Icons.add),
