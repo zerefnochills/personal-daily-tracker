@@ -132,6 +132,23 @@ class Expenses extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+// ---- Phase 4: Vaults ----
+
+// Founder Vault and Knowledge Vault share the same shape — freeform
+// entries with tags, differentiated only by vaultType. Search is plain
+// SQL LIKE across title/content/tags rather than SQLite FTS5, to avoid
+// the extra virtual-table migration complexity for what's currently a
+// personal, low-volume dataset.
+class VaultEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get vaultType => text()(); // 'founder' | 'knowledge'
+  TextColumn get title => text()();
+  TextColumn get content => text()();
+  TextColumn get tags => text().withDefault(const Constant(''))(); // comma-separated
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 @DriftDatabase(tables: [
   Goals,
   Tasks,
@@ -144,12 +161,13 @@ class Expenses extends Table {
   DietPlanEntries,
   MonthlyIncome,
   Expenses,
+  VaultEntries,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -169,6 +187,9 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(dietPlanEntries);
             await m.createTable(monthlyIncome);
             await m.createTable(expenses);
+          }
+          if (from < 4) {
+            await m.createTable(vaultEntries);
           }
         },
       );
@@ -358,6 +379,37 @@ class AppDatabase extends _$AppDatabase {
               e.date.isBiggerOrEqualValue(start) &
               e.date.isSmallerThanValue(end))
           ..orderBy([(e) => OrderingTerm.desc(e.date)]))
+        .watch();
+  }
+
+  // ---- Vaults ----
+  Future<int> addVaultEntry(VaultEntriesCompanion e) =>
+      into(vaultEntries).insert(e);
+
+  Future<bool> updateVaultEntry(VaultEntry entry) =>
+      update(vaultEntries).replace(entry);
+
+  Future<int> deleteVaultEntry(int id) =>
+      (delete(vaultEntries)..where((v) => v.id.equals(id))).go();
+
+  Stream<List<VaultEntry>> watchVaultEntries(String vaultType) =>
+      (select(vaultEntries)
+            ..where((v) => v.vaultType.equals(vaultType))
+            ..orderBy([(v) => OrderingTerm.desc(v.updatedAt)]))
+          .watch();
+
+  /// Plain LIKE search across title/content/tags — fine for a personal,
+  /// low-volume vault. Revisit with FTS5 only if entry count grows large
+  /// enough that this becomes noticeably slow.
+  Stream<List<VaultEntry>> searchVaultEntries(String vaultType, String query) {
+    final likeQuery = '%$query%';
+    return (select(vaultEntries)
+          ..where((v) =>
+              v.vaultType.equals(vaultType) &
+              (v.title.like(likeQuery) |
+                  v.content.like(likeQuery) |
+                  v.tags.like(likeQuery)))
+          ..orderBy([(v) => OrderingTerm.desc(v.updatedAt)]))
         .watch();
   }
 }
