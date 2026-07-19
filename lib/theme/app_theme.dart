@@ -20,6 +20,19 @@ class AppColors {
   static const textSecondary = Color(0xFF6B5E56);
   static const danger = Color(0xFFA43C3C);
   static const success = Color(0xFF3F6B4A);
+
+  /// Distinct-but-harmonious accent per module, so the dashboard/drawer
+  /// don't read as one flat wine color repeated seven times. All chosen
+  /// to sit comfortably next to the cream background and each other.
+  static const moduleColors = {
+    'tasks': Color(0xFF6D2E46), // wine
+    'goals': Color(0xFFB8860B), // muted gold/amber
+    'commitments': Color(0xFFB5502F), // rust/ember (fits the flame icon)
+    'rewards': Color(0xFF8E5A9E), // soft plum
+    'fitness': Color(0xFF3F6B4A), // muted forest green
+    'finance': Color(0xFF2E6B72), // muted teal
+    'vaults': Color(0xFF5A4632), // warm umber
+  };
 }
 
 class AppTheme {
