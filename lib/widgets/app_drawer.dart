@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../data/database.dart';
 import '../theme/app_theme.dart';
+import '../state/app_settings.dart';
+import '../widgets/route_transitions.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/tasks_screen.dart';
 import '../screens/goals_screen.dart';
@@ -18,7 +20,10 @@ class AppDrawer extends StatelessWidget {
 
   void _navigate(BuildContext context, Widget screen) {
     Navigator.pop(context); // close drawer first
-    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+    Navigator.push(
+      context,
+      appRoute(screen, reduceMotion: AppSettings.reduceMotion.value),
+    );
   }
 
   @override
@@ -77,24 +82,48 @@ class AppDrawer extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   _tile(context, Icons.home_outlined, 'Dashboard',
-                      const DashboardScreen()),
-                  _tile(context, Icons.check_circle_outline, 'Tasks',
+                      AppColors.primary, const DashboardScreen()),
+                  _tile(
+                      context,
+                      Icons.check_circle_outline,
+                      'Tasks',
+                      AppColors.moduleColors['tasks']!,
                       const TasksScreen()),
                   _tile(context, Icons.flag_outlined, 'Goals',
-                      const GoalsScreen()),
-                  _tile(context, Icons.local_fire_department_outlined,
-                      'Commitments', const CommitmentsScreen()),
-                  _tile(context, Icons.card_giftcard_outlined, 'Rewards',
+                      AppColors.moduleColors['goals']!, const GoalsScreen()),
+                  _tile(
+                      context,
+                      Icons.local_fire_department_outlined,
+                      'Commitments',
+                      AppColors.moduleColors['commitments']!,
+                      const CommitmentsScreen()),
+                  _tile(
+                      context,
+                      Icons.card_giftcard_outlined,
+                      'Rewards',
+                      AppColors.moduleColors['rewards']!,
                       const RewardsScreen()),
-                  _tile(context, Icons.fitness_center_outlined, 'Fitness',
+                  _tile(
+                      context,
+                      Icons.fitness_center_outlined,
+                      'Fitness',
+                      AppColors.moduleColors['fitness']!,
                       const FitnessScreen()),
-                  _tile(context, Icons.account_balance_wallet_outlined,
-                      'Finance', const FinanceScreen()),
-                  _tile(context, Icons.inventory_2_outlined, 'Vaults',
+                  _tile(
+                      context,
+                      Icons.account_balance_wallet_outlined,
+                      'Finance',
+                      AppColors.moduleColors['finance']!,
+                      const FinanceScreen()),
+                  _tile(
+                      context,
+                      Icons.inventory_2_outlined,
+                      'Vaults',
+                      AppColors.moduleColors['vaults']!,
                       const VaultsScreen()),
                   const Divider(),
                   _tile(context, Icons.person_outline, 'Profile',
-                      const ProfileScreen()),
+                      AppColors.textSecondary, const ProfileScreen()),
                 ],
               ),
             ),
@@ -104,10 +133,10 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _tile(
-      BuildContext context, IconData icon, String label, Widget screen) {
+  Widget _tile(BuildContext context, IconData icon, String label,
+      Color color, Widget screen) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.textPrimary),
+      leading: Icon(icon, color: color),
       title: Text(label),
       onTap: () => _navigate(context, screen),
     );
