@@ -156,6 +156,9 @@ class UserProfile extends Table {
   IntColumn get id => integer()();
   TextColumn get nickname => text().withDefault(const Constant(''))();
   TextColumn get avatarPath => text().nullable()();
+  DateTimeColumn get memberSince =>
+      dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get reduceMotion => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -180,7 +183,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -206,6 +209,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await m.createTable(userProfile);
+          }
+          if (from < 6) {
+            await m.addColumn(userProfile, userProfile.memberSince);
+            await m.addColumn(userProfile, userProfile.reduceMotion);
           }
         },
       );
@@ -431,16 +438,24 @@ class AppDatabase extends _$AppDatabase {
 
   // ---- Profile ----
   // Always id=1. watchProfile emits a sensible default row (empty nickname,
-  // no avatar) if the row hasn't been created yet, so callers never need to
-  // null-check.
+  // no avatar, memberSince=now) if the row hasn't been created yet, so
+  // callers never need to null-check.
   Stream<UserProfileData> watchProfile() {
     return (select(userProfile)..where((u) => u.id.equals(1)))
         .watchSingleOrNull()
         .map((row) =>
-            row ?? const UserProfileData(id: 1, nickname: '', avatarPath: null));
+            row ??
+            UserProfileData(
+              id: 1,
+              nickname: '',
+              avatarPath: null,
+              memberSince: DateTime.now(),
+              reduceMotion: false,
+            ));
   }
 
-  Future<void> setProfile({String? nickname, String? avatarPath}) async {
+  Future<void> setProfile(
+      {String? nickname, String? avatarPath, bool? reduceMotion}) async {
     final existing =
         await (select(userProfile)..where((u) => u.id.equals(1)))
             .getSingleOrNull();
@@ -449,6 +464,7 @@ class AppDatabase extends _$AppDatabase {
         id: 1,
         nickname: Value(nickname ?? ''),
         avatarPath: Value(avatarPath),
+        reduceMotion: Value(reduceMotion ?? false),
       ));
     } else {
       await (update(userProfile)..where((u) => u.id.equals(1))).write(
@@ -456,9 +472,49 @@ class AppDatabase extends _$AppDatabase {
           nickname: nickname != null ? Value(nickname) : const Value.absent(),
           avatarPath:
               avatarPath != null ? Value(avatarPath) : const Value.absent(),
+          reduceMotion: reduceMotion != null
+              ? Value(reduceMotion)
+              : const Value.absent(),
         ),
       );
     }
+  }
+
+  // ---- Stats (for Profile screen) ----
+  Future<int> totalActiveCommitmentsCount() async {
+    final rows = await watchActiveCommitments().first;
+    return rows.length;
+  }
+
+  Future<int> totalTasksCompletedCount() async {
+    final rows =
+        await (select(tasks)..where((t) => t.isDone.equals(true))).get();
+    return rows.length;
+  }
+
+  Future<int> totalVaultEntriesCount() async {
+    final rows = await select(vaultEntries).get();
+    return rows.length;
+  }
+
+  /// Wipes every table's data and reseeds a fresh default profile row.
+  /// Used by the Profile screen's "Reset all local data" action.
+  Future<void> resetAllData() async {
+    await transaction(() async {
+      await delete(tasks).go();
+      await delete(goals).go();
+      await delete(commitmentSessions).go();
+      await delete(lifePassUsage).go();
+      await delete(rewards).go();
+      await delete(commitments).go();
+      await delete(workoutEntries).go();
+      await delete(exercises).go();
+      await delete(dietPlanEntries).go();
+      await delete(expenses).go();
+      await delete(monthlyIncome).go();
+      await delete(vaultEntries).go();
+      await delete(userProfile).go();
+    });
   }
 }
 
