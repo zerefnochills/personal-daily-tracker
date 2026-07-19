@@ -75,4 +75,18 @@ class StreakService {
     final remaining = monthlyAllowance - used;
     return remaining < 0 ? 0 : remaining;
   }
+
+  /// Highest current streak across all active commitments — used for the
+  /// dashboard's top-right streak badge. Returns 0 if there are no
+  /// commitments yet.
+  Future<int> bestActiveStreak() async {
+    final active = await db.watchActiveCommitments().first;
+    if (active.isEmpty) return 0;
+    var best = 0;
+    for (final c in active) {
+      final streak = await currentStreak(c.id, c.targetMinutes);
+      if (streak > best) best = streak;
+    }
+    return best;
+  }
 }
