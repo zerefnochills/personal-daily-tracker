@@ -79,6 +79,32 @@ into a real Flutter project on your machine:
   locally into app storage so it survives cache clears), set a nickname
   used in the greeting
 
+## What's in the refinement pass (animations, streaks, richer profile)
+- **Streak badge**: top-right of the dashboard app bar, shows your best
+  current streak across all active commitments (flame icon + number), tap
+  to jump to Commitments
+- **Page transitions**: fade + subtle upward slide everywhere instead of
+  the plain Material cut (`lib/widgets/route_transitions.dart`)
+- **Dashboard quick-access tiles**: staggered entrance animation on load,
+  press-scale feedback, and each module now has its own accent color
+  (wine/gold/rust/plum/green/teal/umber) instead of one flat color repeated
+  seven times
+- **Recent activity carousel**: horizontal scrolling cards on the dashboard
+  pulling your most recent tasks, commitments, and vault entries — a
+  lighter version of a "recents" row
+- **Speed-dial FAB**: tap the dashboard's + button to expand quick shortcuts
+  to Tasks/Commitments/Finance/Vaults
+- **Reward unlock animation**: reward icons pop with a spring animation
+  when a streak crosses the unlock threshold
+- **Profile screen overhaul**: stats grid (best streak, active commitments,
+  tasks completed, vault entries), "Member since" date, a Reduce Motion
+  toggle that actually disables the above animations app-wide, and a
+  Danger Zone card with a "Reset all local data" action (wipes every
+  table, with a confirmation dialog first)
+- All new animations respect the Reduce Motion setting — check
+  `AppSettings.reduceMotion` (`lib/state/app_settings.dart`) before adding
+  any new animated widget so this stays consistent
+
 ## Known gaps (intentional, for later)
 - Goal↔Task linking (`goalId`/`parentGoalId` columns exist in the schema but
   there's no picker UI yet)
