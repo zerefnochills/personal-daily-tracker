@@ -4,6 +4,7 @@ import '../main.dart';
 import '../data/database.dart';
 import '../logic/streak_service.dart';
 import '../widgets/app_drawer.dart';
+import '../theme/app_theme.dart';
 
 class RewardsScreen extends StatelessWidget {
   const RewardsScreen({super.key});
@@ -118,28 +119,44 @@ class RewardsScreen extends StatelessWidget {
                     builder: (context, streakSnapshot) {
                       final streak = streakSnapshot.data ?? 0;
                       final unlocked = streak >= r.streakTargetDays;
-                      return ListTile(
-                        leading: Icon(
-                          r.isClaimed
-                              ? Icons.check_circle
+                      return Card(
+                        color: (unlocked && !r.isClaimed)
+                            ? AppColors.secondary.withOpacity(0.14)
+                            : null,
+                        child: ListTile(
+                          leading: TweenAnimationBuilder<double>(
+                            key: ValueKey('reward_icon_${r.id}_$unlocked'),
+                            tween: Tween(
+                                begin: unlocked ? 0.5 : 1.0, end: 1.0),
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.elasticOut,
+                            builder: (context, scale, child) =>
+                                Transform.scale(scale: scale, child: child),
+                            child: Icon(
+                              r.isClaimed
+                                  ? Icons.check_circle
+                                  : (unlocked
+                                      ? Icons.lock_open
+                                      : Icons.lock_outline),
+                              color: r.isClaimed
+                                  ? AppColors.success
+                                  : (unlocked
+                                      ? AppColors.secondary
+                                      : AppColors.textSecondary),
+                            ),
+                          ),
+                          title: Text(r.title),
+                          subtitle: Text(
+                              '${commitment.title} • needs $streak/${r.streakTargetDays} day streak'),
+                          trailing: r.isClaimed
+                              ? const Text('Claimed')
                               : (unlocked
-                                  ? Icons.lock_open
-                                  : Icons.lock_outline),
-                          color: r.isClaimed
-                              ? Colors.green
-                              : (unlocked ? Colors.amber : Colors.grey),
+                                  ? TextButton(
+                                      onPressed: () => db.claimReward(r.id),
+                                      child: const Text('Claim'),
+                                    )
+                                  : null),
                         ),
-                        title: Text(r.title),
-                        subtitle: Text(
-                            '${commitment.title} • needs $streak/${r.streakTargetDays} day streak'),
-                        trailing: r.isClaimed
-                            ? const Text('Claimed')
-                            : (unlocked
-                                ? TextButton(
-                                    onPressed: () => db.claimReward(r.id),
-                                    child: const Text('Claim'),
-                                  )
-                                : null),
                       );
                     },
                   );
